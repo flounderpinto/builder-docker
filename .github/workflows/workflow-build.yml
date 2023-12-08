@@ -18,9 +18,9 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Docker build branch
-        run: make docker
-        if: ${{ github.ref_type == 'branch' }}
+#      - name: Docker build branch
+#        run: make docker
+#        if: ${{ github.ref_type == 'branch' }}
 
       - name: Docker build main
         run: make docker ARGS="-t latest"
