@@ -44,6 +44,12 @@ jobs:
       - name: env.BUILD_TYPE
         run: echo ${{env.BUILD_TYPE}}
 
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
       - name: Docker build branch
         run: make docker
         if: ${{ env.BUILD_TYPE == 'branch' }}
