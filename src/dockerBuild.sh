@@ -147,7 +147,7 @@ function dockerBuild
         buildCmd="${buildCmd} -t $DOCKER_REGISTRY/$DOCKER_REPO:$i"
     done
     buildCmd="${buildCmd} --cache-from type=registry,ref=$DOCKER_REGISTRY/$DOCKER_REPO"
-    buildCmd="${buildCmd} --cache-to   type=registry,ref=$DOCKER_REGISTRY/$DOCKER_REPO,mode=max"
+    buildCmd="${buildCmd} --cache-to type=inline"
     buildCmd="${buildCmd} -f $DOCKER_FILE $BUILD_CONTEXT_DIR 2>&1"
 
     #Create a new builder instance
