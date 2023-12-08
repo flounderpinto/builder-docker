@@ -52,11 +52,13 @@ jobs:
 
       - name: Docker build branch
         run: make docker
-        if: ${{ env.BUILD_TYPE == 'branch' }}
+        if: ${{ github.ref_type == 'branch' }}
+        #if: ${{ env.BUILD_TYPE == 'branch' }}
 
       - name: Docker build main
         run: make docker ARGS="-t latest"
-        if: ${{ env.BUILD_TYPE == 'main' }}
+        if: ${{ github.ref_type == 'branch' && github.ref_name == 'main' }}
+        #if: ${{ env.BUILD_TYPE == 'main' }}
 
       - name: Docker build tag
         run: make docker ARGS="-t ${{github.ref_name}}"
