@@ -12,8 +12,39 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      - name: GITHUB_REF_NAME
-        run: echo $GITHUB_REF_NAME
+      - name: Set variable
+        id: set-variable
+        run: |
+          if [ ${{ github.ref_type }} = 'branch' ]; then
+            echo "Is branch"
+            if [ ${{ github.ref_name }} = 'main' ]; then
+              echo "Is branch2"
+              echo "BUILD_TYPE=branch" >> $GITHUB_ENV
+            else
+              echo "Is main"
+              echo "BUILD_TYPE=main" >> $GITHUB_ENV
+            fi
+          elif [ ${{ github.ref_type }} = 'tag' ]; then
+            echo "Is tag"
+            echo "BUILD_TYPE=tag" >> $GITHUB_ENV
+          fi
+        shell: bash
+
+      - name: Read exported variable
+        run: |
+          echo "OUTPUT: ${{ steps.check.test-env.test }}"
+
+      - name: github.ref_type
+        run: echo ${{github.ref_type}}
+
+      - name: github.ref_name
+        run: echo ${{github.ref_name}}
+
+      - name: github.ref
+        run: echo ${{github.ref}}
+
+      - name: env.BUILD_TYPE
+        run: echo ${{env.BUILD_TYPE}}
 
       - name: make docker
         run: make docker
