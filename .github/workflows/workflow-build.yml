@@ -13,19 +13,17 @@ jobs:
       - uses: actions/checkout@v3
 
       - name: Set variable
-        id: set-variable
         run: |
           if [ ${{ github.ref_type }} = 'branch' ]; then
-            echo "Is branch"
             if [ ${{ github.ref_name }} = 'main' ]; then
-              echo "Is branch2"
-              echo "BUILD_TYPE=branch" >> $GITHUB_ENV
-            else
-              echo "Is main"
+              echo "main"
               echo "BUILD_TYPE=main" >> $GITHUB_ENV
+            else
+              echo "branch"
+              echo "BUILD_TYPE=branch" >> $GITHUB_ENV
             fi
           elif [ ${{ github.ref_type }} = 'tag' ]; then
-            echo "Is tag"
+            echo "tag"
             echo "BUILD_TYPE=tag" >> $GITHUB_ENV
           fi
         shell: bash
@@ -46,5 +44,14 @@ jobs:
       - name: env.BUILD_TYPE
         run: echo ${{env.BUILD_TYPE}}
 
-      - name: make docker
+      - name: Docker build branch
         run: make docker
+        if: ${{ env.BUILD_TYPE == 'branch' }}
+
+      - name: Docker build main
+        run: make docker ARGS="-t latest"
+        if: ${{ env.BUILD_TYPE == 'main' }}
+
+      - name: Docker build tag
+        run: make docker ARGS="-t ${{github.ref_name}}"
+        if: ${{ env.BUILD_TYPE == 'tag' }}
