@@ -24,7 +24,8 @@ RUN \
     apt-get install -y \
 #      Only the docker executable is needed, not an entire install.
        docker-ce-cli=$DOCKER_VERSION \
-       docker-buildx-plugin=$BUILDX_VERSION && \
+       docker-buildx-plugin=$BUILDX_VERSION \
+       git && \
     apt-get autoremove -y && \
     rm -rf /var/lib/apt/lists/*
 
