@@ -1,6 +1,7 @@
 #!/bin/bash
 
 THIS_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+MAIN_BRANCH="main"
 
 function dockerBuildUsage
 {
@@ -123,15 +124,17 @@ function dockerBuild
         TAGS+=("$gitVersion")
     fi
 
+    #Find the current git branch.
     local gitBranch=""
     gitBranch=$(git branch --show-current)
     if [ -z "$gitBranch" ]; then
-        echo "Error, Could not determine git branch name."
-        exit 1
+        echo "Could not determine git branch name, caching to main."
+        gitBranch="$MAIN_BRANCH"
+    else
+        #Tag with the branch name, so we have a tag that tracks the latest version of a branch,
+        #  and also so that we have a location to push the build cache.
+        TAGS+=("$gitBranch")
     fi
-    #Tag with the branch name, so we have a tag that tracks the latest version of a branch,
-    #  and also so that we have a location to push the build cache.
-    TAGS+=("$gitBranch")
 
     echo "REGISTRY:$DOCKER_REGISTRY"
     echo "REPO:$DOCKER_REPO"
