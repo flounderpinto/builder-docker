@@ -117,11 +117,21 @@ function dockerBuild
         local gitVersion=""
         gitVersion=$(git --git-dir "$GIT_DIR" log -1 --pretty=%H)
         if [ -z "$gitVersion" ]; then
-            echo "Error, Could not determine git repo version"
+            echo "Error, Could not determine git repo version."
             exit 1
         fi
         TAGS+=("$gitVersion")
     fi
+
+    local gitBranch=""
+    gitBranch=$(git branch --show-current)
+    if [ -z "$gitBranch" ]; then
+        echo "Error, Could not determine git branch name."
+        exit 1
+    fi
+    #Tag with the branch name, so we have a tag that tracks the latest version of a branch,
+    #  and also so that we have a location to push the build cache.
+    TAGS+=("$gitBranch")
 
     echo "REGISTRY:$DOCKER_REGISTRY"
     echo "REPO:$DOCKER_REPO"
@@ -146,8 +156,12 @@ function dockerBuild
     for i in "${TAGS[@]}"; do
         buildCmd="${buildCmd} -t $DOCKER_REGISTRY/$DOCKER_REPO:$i"
     done
-    buildCmd="${buildCmd} --cache-from type=registry,ref=$DOCKER_REGISTRY/$DOCKER_REPO:buildcache"
-    buildCmd="${buildCmd} --cache-to type=inline"
+    #The caching location is a little tricky since multiple tags can be provided.
+    #  So, store the cache in the branch name tag instead since the deltas on a
+    #  single branch should be fairly minimal.
+    #  https://docs.docker.com/build/cache/backends/#multiple-caches
+    buildCmd="${buildCmd} --cache-from=type=registry,ref=$DOCKER_REGISTRY/$DOCKER_REPO:$gitBranch"
+    buildCmd="${buildCmd} --cache-from=type=registry,ref=$DOCKER_REGISTRY/$DOCKER_REPO:$gitBranch"
     buildCmd="${buildCmd} -f $DOCKER_FILE $BUILD_CONTEXT_DIR 2>&1"
 
     #Create a new builder instance

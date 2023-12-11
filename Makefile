@@ -2,7 +2,9 @@ ROOT_DIR:=$(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))
 
 DOCKER_REGISTRY=index.docker.io/flounder5
 DOCKER_REPO=builder-docker
-DOCKER_PLATFORM=linux/amd64,linux/arm/v7
+#This is a comma-separated list.  
+#  For multiple platforms, use something like "linux/amd64,linux/arm/v7"
+DOCKER_PLATFORM=linux/amd64
 
 .PHONY: docker
 
