@@ -2,6 +2,7 @@
 
 THIS_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 MAIN_BRANCH="main"
+CODE_DIR="${CODE_DIR:-/opt/code}"
 
 function dockerBuildUsage
 {
@@ -193,7 +194,7 @@ function dockerBuild
 #  always the same.  This is a shortcut for calling dockerBuild()
 function dockerBuildStandard
 {
-    dockerBuild -d /opt/code -f /opt/code/docker/Dockerfile -g /opt/code "$@"
+    dockerBuild -d "$CODE_DIR" -f "$CODE_DIR/docker/Dockerfile" -g "$CODE_DIR" "$@"
 }
 
 function dockerPushUsage
@@ -299,7 +300,7 @@ function dockerPush
 #  always the same.  This is a shortcut for calling dockerPush()
 function dockerPushStandard
 {
-    dockerPush -g /opt/code "$@"
+    dockerPush -g "$CODE_DIR" "$@"
 }
 
 #Allows function calls based on arguments passed to the script
