@@ -109,9 +109,9 @@ function dockerBuild
         exit 1
     fi
 
-    #If not git repo provided, default to current directory
+    #If not git repo provided, default to the code dir
     if [ -z "$GIT_DIR" ]; then
-        GIT_DIR="./.git"
+        GIT_DIR="$CODE_DIR/.git"
     fi
 
     #Default is to just tag with the git version.
@@ -127,7 +127,7 @@ function dockerBuild
 
     #Find the current git branch.
     local gitBranch=""
-    gitBranch=$(git branch --show-current)
+    gitBranch=$(git --git-dir "$GIT_DIR" branch --show-current)
     if [ -z "$gitBranch" ]; then
         echo "Could not determine git branch name, caching to main."
         gitBranch="$MAIN_BRANCH"
