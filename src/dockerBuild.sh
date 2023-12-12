@@ -20,6 +20,28 @@ function dockerBuildUsage
     echo $'\t\t-h - Show this help.'
 }
 
+function createBuilder
+{
+    local createBuilderCmd="docker buildx create --use"
+    eval "$createBuilderCmd"
+    local status=$?
+    if [ "$status" -ne 0 ]; then
+        echo "Error creating builder instance"
+        exit 1
+    fi
+}
+
+function removeBuilder
+{
+    local removeBuilderCmd="docker buildx rm --force"
+    eval "$removeBuilderCmd"
+    local status=$?
+    if [ "$status" -ne 0 ]; then
+        echo "Error removing builder instance"
+        exit 1
+    fi
+}
+
 # Builds and tags a docker image.
 function dockerBuild
 {
@@ -169,13 +191,7 @@ function dockerBuild
     buildCmd="${buildCmd} -f $DOCKER_FILE $BUILD_CONTEXT_DIR 2>&1"
 
     #Create a new builder instance
-    local createBuilderCmd="docker buildx create --use"
-    eval "$createBuilderCmd"
-    local status=$?
-    if [ "$status" -ne 0 ]; then
-        echo "Error creating builder instance"
-        exit 1
-    fi
+    createBuilder
 
     #Build
     echo "Building: $buildCmd"
@@ -184,8 +200,13 @@ function dockerBuild
     local buildSuccess=${PIPESTATUS[0]}
     if [ "$buildSuccess" -ne 0 ]; then
        echo "Docker build error.  Exiting."
+       #Remove builder before exiting instance
+       removeBuilder
        exit "$buildSuccess"
     fi
+
+    #Remove builder instance
+    removeBuilder
 
     exit 0
 }
