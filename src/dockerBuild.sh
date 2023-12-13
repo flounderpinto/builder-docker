@@ -7,17 +7,27 @@ CODE_DIR="${CODE_DIR:-/opt/code}"
 function dockerBuildUsage
 {
     echo $'Usage:'
-    echo $'\tdockerBuild.sh dockerBuild [-t tag1,tag2,tagN] [-a] [-h] <-e dockerRegistryName> <-r dockerRepoName> <-d buildContextDir> <-f dockerFile> <-g gitRepoDir>'
-    echo $'\t\t-t - A comma-separated list of additional tags to apply to the image'
+    echo $'\tdockerBuild.sh dockerBuild -e dockerRegistryName -r dockerRepoName -d buildContextDir -f dockerFile [-g gitRepoDir] [-t tag1,tag2,tagN] [-b buildArg] [-p platform1] [-a args] [-h]'
     echo $'\t\t-e - Docker registry name.  e.g. "index.docker.io/my-registry"'
     echo $'\t\t-r - Docker repo name. e.g. "builder-docker"'
     echo $'\t\t-d - Docker build context'
     echo $'\t\t-f - Dockerfile'
     echo $'\t\t-g - Git repo directory'
-    echo $'\t\t-p - Build platform'
+    echo $'\t\t-t - A comma-separated list of additional tags to apply to the image'
     echo $'\t\t-b - Build-arg values.  Can be defined multiple times.'
+    echo $'\t\t-p - Set target platform for build'
     echo $'\t\t-a - Additional docker build args passed directly to docker build'
     echo $'\t\t-h - Show this help.'
+}
+
+function getGitVersion
+{
+    git --git-dir "$GIT_DIR" log -1 --pretty=%H
+}
+
+function getGitBranch
+{
+    git --git-dir "$GIT_DIR" branch --show-current
 }
 
 function createBuilder
@@ -39,6 +49,22 @@ function removeBuilder
     if [ "$status" -ne 0 ]; then
         echo "Error removing builder instance"
         exit 1
+    fi
+}
+
+function build
+{
+    local buildCmd="$1"
+    echo "Building: $buildCmd"
+    #TODO - NEEDED?
+    eval "$buildCmd" | tee "$THIS_DIR"/tmp
+    #The exit code of 'docker build' is lost with $? because of the pipe.  Use PIPESTATUS instead.
+    local buildSuccess=${PIPESTATUS[0]}
+    if [ "$buildSuccess" -ne 0 ]; then
+       echo "Docker build error.  Exiting."
+       #Remove builder before exiting instance
+       removeBuilder
+       exit "$buildSuccess"
     fi
 }
 
@@ -115,7 +141,7 @@ function dockerBuild
 
     if [ -z "$DOCKER_REPO" ]; then
         echo "Error, the docker repo name (-r) is required."
-        dockerBuildUsage
+        dockerBuildUsage#TODO
         exit 1
     fi
 
@@ -139,7 +165,8 @@ function dockerBuild
     #Default is to just tag with the git version.
     if [ ${#TAGS[@]} -eq 0 ]; then
         local gitVersion=""
-        gitVersion=$(git --git-dir "$GIT_DIR" log -1 --pretty=%H)
+        #gitVersion=$(git --git-dir "$GIT_DIR" log -1 --pretty=%H) #TODO
+        gitVersion=$(getGitVersion)
         if [ -z "$gitVersion" ]; then
             echo "Error, Could not determine git repo version."
             exit 1
@@ -149,7 +176,8 @@ function dockerBuild
 
     #Find the current git branch.
     local gitBranch=""
-    gitBranch=$(git --git-dir "$GIT_DIR" branch --show-current)
+    #gitBranch=$(git --git-dir "$GIT_DIR" branch --show-current) #TODO
+    gitBranch=$(getGitBranch)
     if [ -z "$gitBranch" ]; then
         echo "Could not determine git branch name, caching to main."
         gitBranch="$MAIN_BRANCH"
@@ -168,7 +196,6 @@ function dockerBuild
     echo "TAGS:${TAGS[*]}"
 
     #Put together the build command.
-    #  Freezes often sometimes occur in Jenkins without the --network host option.
     local buildCmd="docker buildx build -o type=registry"
     for buildArg in "${BUILD_ARGS[@]}"; do
         buildCmd="${buildCmd} --build-arg $buildArg"
@@ -194,16 +221,7 @@ function dockerBuild
     createBuilder
 
     #Build
-    echo "Building: $buildCmd"
-    eval "$buildCmd" | tee "$THIS_DIR"/tmp
-    #The exit code of 'docker build' is lost with $? because of the pipe.  Use PIPESTATUS instead.
-    local buildSuccess=${PIPESTATUS[0]}
-    if [ "$buildSuccess" -ne 0 ]; then
-       echo "Docker build error.  Exiting."
-       #Remove builder before exiting instance
-       removeBuilder
-       exit "$buildSuccess"
-    fi
+    build "$buildCmd"
 
     #Remove builder instance
     removeBuilder
@@ -216,112 +234,6 @@ function dockerBuild
 function dockerBuildStandard
 {
     dockerBuild -d "$CODE_DIR" -f "$CODE_DIR/docker/Dockerfile" -g "$CODE_DIR" "$@"
-}
-
-function dockerPushUsage
-{
-    echo $'Usage:'
-    echo $'\tdockerBuild.sh dockerPush [-t tag1,tag2,tagN] [-h] <-r dockerRepoName> <-g gitRepoDir>'
-    echo $'\t\t-t - A comma-separated list of tags to push'
-    echo $'\t\t-e - Docker registry name.  e.g. "index.docker.io/my-registry"'
-    echo $'\t\t-r - Docker repo name. e.g. "builder-docker"'
-    echo $'\t\t-g - Git repo directory'
-    echo $'\t\t-h - Show this help.'
-}
-
-function dockerPush
-{
-    local TAGS=()
-    local DOCKER_REGISTRY=""
-    local DOCKER_REPO=""
-    local GIT_DIR=""
-
-    while getopts ":t:e:r:g:h" opt; do
-      case $opt in
-        t)
-          IFS=',' read -ra TAG_LIST <<< "$OPTARG"
-          for i in "${TAG_LIST[@]}"; do
-            TAGS+=("$i")
-          done
-          ;;
-        e)
-          DOCKER_REGISTRY=$OPTARG
-          ;;
-        r)
-          DOCKER_REPO=$OPTARG
-          ;;
-        g)
-          GIT_DIR=$OPTARG
-          #The location of the .git directory is required.
-          GIT_DIR="$GIT_DIR/.git"
-          ;;
-        h)
-          dockerPushUsage
-          exit 1
-          ;;
-        \?)
-          echo "Invalid option: -$OPTARG" >&2
-          dockerPushUsage
-          exit 1
-          ;;
-        :)
-          echo "Option -$OPTARG requires an argument." >&2
-          dockerPushUsage
-          exit 1
-          ;;
-      esac
-    done
-
-    if [ -z "$DOCKER_REGISTRY" ]; then
-        echo "Error, the docker registry name (-e) is required."
-        dockerBuildUsage
-        exit 1
-    fi
-
-    if [ -z "$DOCKER_REPO" ]; then
-        echo "Error, the docker repo name (-r) is required."
-        dockerBuildUsage
-        exit 1
-    fi
-
-    #If not git repo provided, default to current directory
-    if [ -z "$GIT_DIR" ]; then
-        GIT_DIR="./.git"
-    fi
-
-    #Default is to just push the git version tag.
-    if [ ${#TAGS[@]} -eq 0 ]; then
-        local gitVersion=""
-        gitVersion=$(git --git-dir "$GIT_DIR" log -1 --pretty=%H)
-        if [ -z "$gitVersion" ]; then
-            echo "Error, Could not determine git repo version"
-            exit 1
-        fi
-        TAGS+=("$gitVersion")
-    fi
-
-    docker login
-
-    local retVal=0
-
-    for i in "${TAGS[@]}"; do
-        echo "Pushing: $DOCKER_REGISTRY/$DOCKER_REPO:$i"
-        docker push "$DOCKER_REGISTRY"/"$DOCKER_REPO":"$i"
-        local pushStatus=$?
-        if [ "$pushStatus" -ne 0 ]; then
-            echo "Error pushing $DOCKER_REGISTRY/$DOCKER_REPO:$i"
-            retVal=1
-        fi
-    done
-
-    exit $retVal
-}
-
-#When calling this script through docker, many arguments are
-#  always the same.  This is a shortcut for calling dockerPush()
-function dockerPushStandard
-{
-    dockerPush -g "$CODE_DIR" "$@"
 }
 
 #Allows function calls based on arguments passed to the script
