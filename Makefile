@@ -51,6 +51,7 @@ docker_main:
 	${DOCKER_BUILD_MAIN_CMD}
 
 docker_tag:
+	test ${TAG}
 	${DOCKER_BUILD_TAG_CMD}
 
 #Everything right of the pipe is order-only prerequisites.
