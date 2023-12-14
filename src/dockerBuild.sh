@@ -7,16 +7,23 @@ CODE_DIR="${CODE_DIR:-/opt/code}"
 function dockerBuildUsage
 {
     echo $'Usage:'
-    echo $'\tdockerBuild.sh dockerBuild -e dockerRegistryName -r dockerRepoName -d buildContextDir -f dockerFile [-g gitRepoDir] [-t tag1,tag2,tagN] [-b buildArg] [-p platform1] [-a args] [-h]'
-    echo $'\t\t-e - Docker registry name.  e.g. "index.docker.io/my-registry"'
-    echo $'\t\t-r - Docker repo name. e.g. "builder-docker"'
-    echo $'\t\t-d - Docker build context'
-    echo $'\t\t-f - Dockerfile'
-    echo $'\t\t-g - Git repo directory'
-    echo $'\t\t-t - A comma-separated list of additional tags to apply to the image'
-    echo $'\t\t-b - Build-arg values.  Can be defined multiple times.'
-    echo $'\t\t-p - Set target platform for build'
-    echo $'\t\t-a - Additional docker build args passed directly to docker build'
+    echo $'\tdockerBuild.sh dockerBuild -e dockerRegistryName -r dockerRepoName -d buildContextDir -f dockerFile [-g gitRepoDir] [-p platform]... [-t tag]... [-b buildArg]... [-a arg]... [-h]'
+    echo $'\t\t-e - Docker registry name.'
+    echo $'\t\t\te.g. "index.docker.io/my-registry"'
+    echo $'\t\t-r - Docker repo name.'
+    echo $'\t\t\te.g. "builder-docker".'
+    echo $'\t\t-d - Docker build context.'
+    echo $'\t\t-f - Dockerfile location.'
+    echo $'\t\t-g - Git repo directory.'
+    echo $'\t\t-p - Target platform for build.'
+    echo $'\t\t\tCan be a comma-separated list or defined multiple times. '
+    echo $'\t\t\te.g. "linux/amd64", or "linux/amd64,linux/arm/v7"'
+    echo $'\t\t-t - Additional tags to apply to the image.'
+    echo $'\t\t\tCan be defined multiple times.'
+    echo $'\t\t-b - Build-arg values.'
+    echo $'\t\t\tCan be defined multiple times.'
+    echo $'\t\t-a - Additional docker build args passed directly to docker build.'
+    echo $'\t\t\tCan be a comma-separated list or defined multiple times.'
     echo $'\t\t-h - Show this help.'
 }
 
@@ -71,50 +78,44 @@ function build
 # Builds and tags a docker image.
 function dockerBuild
 {
-    local TAGS=()
     local DOCKER_REGISTRY=""
     local DOCKER_REPO=""
     local BUILD_CONTEXT_DIR=""
     local DOCKER_FILE=""
     local GIT_DIR=""
-    local PLATFORM=""
+    local PLATFORM=()
+    local TAGS=()
     local BUILD_ARGS=()
-    local ADDITIONAL_BUILD_FLAGS=""
+    local ADDITIONAL_BUILD_FLAGS=()
 
-    while getopts ":t:e:r:d:f:g:p:b:a:h" opt; do
+    while getopts ":e:r:d:f:g:p:t:b:a:h" opt; do
       case $opt in
-        t)
-          IFS=',' read -ra TAG_LIST <<< "$OPTARG"
-          for i in "${TAG_LIST[@]}"; do
-            TAGS+=("$i")
-          done
-          ;;
         e)
-          DOCKER_REGISTRY=$OPTARG
+          DOCKER_REGISTRY="$OPTARG"
           ;;
         r)
-          DOCKER_REPO=$OPTARG
+          DOCKER_REPO="$OPTARG"
           ;;
         d)
-          BUILD_CONTEXT_DIR=$OPTARG
+          BUILD_CONTEXT_DIR="$OPTARG"
           ;;
         f)
-          DOCKER_FILE=$OPTARG
+          DOCKER_FILE="$OPTARG"
           ;;
         g)
-          GIT_DIR=$OPTARG
-          #The location of the .git directory is required.
-          GIT_DIR="$GIT_DIR/.git"
+          GIT_DIR="$OPTARG"
           ;;
         p)
-          PLATFORM=$OPTARG
+          PLATFORM+=("$OPTARG")
+          ;;
+        t)
+          TAGS+=("$OPTARG")
           ;;
         b)
           BUILD_ARGS+=("$OPTARG")
           ;;
         a)
-          ADDITIONAL_BUILD_FLAGS="$OPTARG"
-          echo "$OPTARG"
+          ADDITIONAL_BUILD_FLAGS+=("$OPTARG")
           ;;
         h)
           dockerBuildUsage
@@ -141,7 +142,7 @@ function dockerBuild
 
     if [ -z "$DOCKER_REPO" ]; then
         echo "Error, the docker repo name (-r) is required."
-        dockerBuildUsage#TODO
+        dockerBuildUsage
         exit 1
     fi
 
@@ -159,13 +160,14 @@ function dockerBuild
 
     #If not git repo provided, default to the code dir
     if [ -z "$GIT_DIR" ]; then
-        GIT_DIR="$CODE_DIR/.git"
+        GIT_DIR="$CODE_DIR"
     fi
+    #The location of the .git directory is required.
+    GIT_DIR="$GIT_DIR/.git"
 
     #Default is to just tag with the git version.
     if [ ${#TAGS[@]} -eq 0 ]; then
         local gitVersion=""
-        #gitVersion=$(git --git-dir "$GIT_DIR" log -1 --pretty=%H) #TODO
         gitVersion=$(getGitVersion)
         if [ -z "$gitVersion" ]; then
             echo "Error, Could not determine git repo version."
@@ -176,7 +178,6 @@ function dockerBuild
 
     #Find the current git branch.
     local gitBranch=""
-    #gitBranch=$(git --git-dir "$GIT_DIR" branch --show-current) #TODO
     gitBranch=$(getGitBranch)
     if [ -z "$gitBranch" ]; then
         echo "Could not determine git branch name, caching to main."
@@ -191,23 +192,33 @@ function dockerBuild
     echo "REPO:$DOCKER_REPO"
     echo "BUILD_CONTEXT_DIR:$BUILD_CONTEXT_DIR"
     echo "DOCKER_FILE:$DOCKER_FILE"
-    echo "PLATFORM:$PLATFORM"
-    echo "ADDITIONAL_BUILD_FLAGS:$ADDITIONAL_BUILD_FLAGS"
+    echo "GIT_DIR:$GIT_DIR"
+    echo "PLATFORM:${PLATFORM[*]}"
     echo "TAGS:${TAGS[*]}"
+    echo "BUILD_ARGS:${BUILD_ARGS[*]}"
+    echo "ADDITIONAL_BUILD_FLAGS:${ADDITIONAL_BUILD_FLAGS[*]}"
 
     #Put together the build command.
+    #  Build args
     local buildCmd="docker buildx build -o type=registry"
     for buildArg in "${BUILD_ARGS[@]}"; do
         buildCmd="${buildCmd} --build-arg $buildArg"
     done
-    if [ -n "$PLATFORM" ]; then
-        buildCmd="${buildCmd} --platform=$PLATFORM"
-    fi
-    if [ -n "$ADDITIONAL_BUILD_FLAGS" ]; then
-        buildCmd="${buildCmd} $ADDITIONAL_BUILD_FLAGS"
-    fi
-    for i in "${TAGS[@]}"; do
-        buildCmd="${buildCmd} -t $DOCKER_REGISTRY/$DOCKER_REPO:$i"
+    #  Platform
+    for i in "${!PLATFORM[@]}"; do
+        if [ "$i" -eq 0 ]; then
+            buildCmd="${buildCmd} --platform=${PLATFORM[$i]}"
+        else
+            buildCmd="${buildCmd},${PLATFORM[$i]}"
+        fi
+    done
+    #Additional build flags
+    for flag in "${ADDITIONAL_BUILD_FLAGS[@]}"; do
+        buildCmd="${buildCmd} $flag"
+    done
+    #Tags
+    for tag in "${TAGS[@]}"; do
+        buildCmd="${buildCmd} -t $DOCKER_REGISTRY/$DOCKER_REPO:$tag"
     done
     #The caching location is a little tricky since multiple tags can be provided.
     #  So, store the cache in the branch name tag instead since the deltas on a

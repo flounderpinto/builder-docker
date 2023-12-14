@@ -16,6 +16,12 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
+      - name: Analyze
+        run: make analyze
+
+      - name: Unit test
+        run: make unit_test
+
       - name: Docker build branch
         run: make docker
         if: ${{ github.ref_type == 'branch' }}
