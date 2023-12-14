@@ -21,7 +21,6 @@ BUILDER_RUN_CMD=${BUILDER_PULL_CMD} && \
         ${BUILDER_IMAGE} /bin/bash -c
 
 DOCKER_REPO=builder-docker
-DOCKER_PLATFORM=linux/amd64
 
 .PHONY: init analyze analyze_local unit_test unit_test_local docker
 
@@ -44,13 +43,9 @@ unit_test_local:
 #  instead of through the builder-docker image.
 docker:
 	./src/dockerBuild.sh \
-        dockerBuild \
+        dockerBuildStandardBranch \
         -e ${DOCKER_REGISTRY} \
         -r ${DOCKER_REPO} \
-        -p ${DOCKER_PLATFORM} \
-        -c "." \
-        -g "." \
-        -f ./docker/Dockerfile \
         ${ARGS}
 
 #Everything right of the pipe is order-only prerequisites.

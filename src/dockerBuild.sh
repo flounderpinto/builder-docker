@@ -256,7 +256,7 @@ function dockerBuild
 #  always the same.  This is a shortcut for calling dockerBuild()
 function dockerBuildStandardBranch
 {
-    dockerBuild -c "$CODE_DIR" -f "$CODE_DIR/docker/Dockerfile" -g "$CODE_DIR" "$@"
+    dockerBuild -c "." -f "./docker/Dockerfile" -g "." "$@"
 }
 function dockerBuildStandardMain
 {
@@ -267,7 +267,6 @@ function dockerBuildStandardTag
     local TAG="$1"
     shift
     echo "${@}"
-    #TODO - -n
     dockerBuild -c "$CODE_DIR" -f "$CODE_DIR/docker/Dockerfile" -g "$CODE_DIR" -n -o -t "$TAG" "${@}"
 }
 
