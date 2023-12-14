@@ -58,8 +58,8 @@ testSingleArgs()
 {
   local E="docker-registry"
   local R="docker-repo"
-  local D="build-context-dir"
-  local F="dockerfile"
+  local C="build-context-dir"
+  local D="dockerfile"
   local G="git-dir"
   local P="target"
   local T="tag"
@@ -71,8 +71,8 @@ testSingleArgs()
   stdout=$(dockerBuild \
      -e "$E" \
      -r "$R" \
+     -c "$C" \
      -d "$D" \
-     -f "$F" \
      -g "$G" \
      -p "$P" \
      -t "$T" \
@@ -89,8 +89,8 @@ testMultipleArgs()
 {
   local E="docker-registry"
   local R="docker-repo"
-  local D="build-context-dir"
-  local F="dockerfile"
+  local C="build-context-dir"
+  local D="dockerfile"
   local G="git-dir"
   local P1="platform1"
   local P2="platform2"
@@ -106,8 +106,8 @@ testMultipleArgs()
   stdout=$(dockerBuild \
      -e "$E" \
      -r "$R" \
+     -c "$C" \
      -d "$D" \
-     -f "$F" \
      -g "$G" \
      -p "$P1" \
      -p "$P2" \
@@ -128,8 +128,8 @@ testMultipleArgsCommaSeparated()
 {
   local E="docker-registry"
   local R="docker-repo"
-  local D="build-context-dir"
-  local F="dockerfile"
+  local C="build-context-dir"
+  local D="dockerfile"
   local G="git-dir"
   local P="platform1,platform2"
   local T1="tag1"
@@ -143,8 +143,8 @@ testMultipleArgsCommaSeparated()
   stdout=$(dockerBuild \
      -e "$E" \
      -r "$R" \
+     -c "$C" \
      -d "$D" \
-     -f "$F" \
      -g "$G" \
      -p "$P" \
      -t "$T1" \
