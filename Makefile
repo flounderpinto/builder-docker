@@ -7,6 +7,9 @@ INIT_CMD=git submodule update --init --recursive
 ANALYZE_CMD=cd ./src        && find . -name '*.sh' | xargs shellcheck -x && \
             cd ../test/unit && find . -name '*.sh' | xargs shellcheck -x
 UNIT_TEST_CMD=cd ./test/unit && ./test.sh
+DOCKER_BUILD_BRANCH_CMD=./src/dockerBuild.sh dockerBuildStandardBranch -e ${DOCKER_REGISTRY} -r ${DOCKER_REPO} ${ARGS}
+DOCKER_BUILD_MAIN_CMD=./src/dockerBuild.sh dockerBuildStandardMain -e ${DOCKER_REGISTRY} -r ${DOCKER_REPO} ${ARGS}
+DOCKER_BUILD_TAG_CMD=./src/dockerBuild.sh dockerBuildStandardTag ${TAG} -e ${DOCKER_REGISTRY} -r ${DOCKER_REPO} ${ARGS}
 
 DOCKER_REGISTRY=index.docker.io/flounder5
 
@@ -22,7 +25,7 @@ BUILDER_RUN_CMD=${BUILDER_PULL_CMD} && \
 
 DOCKER_REPO=builder-docker
 
-.PHONY: init analyze analyze_local unit_test unit_test_local docker
+.PHONY: init analyze analyze_local unit_test unit_test_local docker docker_main docker_tag
 
 init:
 	${INIT_CMD}
@@ -42,11 +45,13 @@ unit_test_local:
 #To prevent the circular dependency, this repo calls the dockerBuild script directly
 #  instead of through the builder-docker image.
 docker:
-	./src/dockerBuild.sh \
-        dockerBuildStandardBranch \
-        -e ${DOCKER_REGISTRY} \
-        -r ${DOCKER_REPO} \
-        ${ARGS}
+	${DOCKER_BUILD_BRANCH_CMD}
+
+docker_main:
+	${DOCKER_BUILD_MAIN_CMD}
+
+docker_tag:
+	.${DOCKER_BUILD_TAG_CMD}
 
 #Everything right of the pipe is order-only prerequisites.
 all: | init analyze unit_test docker
