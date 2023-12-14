@@ -56,28 +56,28 @@ function oneTimeTearDown()
 
 testSingleArgs()
 {
-  local REGISTRY="docker-registry"
-  local REPO="docker-repo"
-  local BUILD_CONTEXT="build-context-dir"
-  local DOCKERFILE="dockerfile"
-  local GIT_DIR="git-dir"
-  local PLATFORM="target"
-  local TAG="tag"
-  local BUILD_ARG="build-arg"
-  local ARGS="--arg on"
+  local E="docker-registry"
+  local R="docker-repo"
+  local D="build-context-dir"
+  local F="dockerfile"
+  local G="git-dir"
+  local P="target"
+  local T="tag"
+  local B="build-arg"
+  local A="--arg on"
 
   rm -f "$OUTPUT_FILE"
 
   stdout=$(dockerBuild \
-     -e "$REGISTRY" \
-     -r "$REPO" \
-     -d "$BUILD_CONTEXT" \
-     -f "$DOCKERFILE" \
-     -g "$GIT_DIR" \
-     -p "$PLATFORM" \
-     -t "$TAG" \
-     -b "$BUILD_ARG" \
-     -a "$ARGS")
+     -e "$E" \
+     -r "$R" \
+     -d "$D" \
+     -f "$F" \
+     -g "$G" \
+     -p "$P" \
+     -t "$T" \
+     -b "$B" \
+     -a "$A")
   echo "$stdout"
   buildCmd=$(<"$OUTPUT_FILE")
   expected=$(<"$SCRIPT_DIR/expected/singleArgs")
@@ -87,36 +87,36 @@ testSingleArgs()
 
 testMultipleArgs()
 {
-  local REGISTRY="docker-registry"
-  local REPO="docker-repo"
-  local BUILD_CONTEXT="build-context-dir"
-  local DOCKERFILE="dockerfile"
-  local GIT_DIR="git-dir"
-  local PLATFORM1="platform1"
-  local PLATFORM2="platform2"
-  local TAG1="tag1"
-  local TAG2="tag2"
-  local BUILD_ARG1="build-arg1"
-  local BUILD_ARG2="build-arg2"
-  local ARG1="--arg1 on"
-  local ARG2="--arg2 off"
+  local E="docker-registry"
+  local R="docker-repo"
+  local D="build-context-dir"
+  local F="dockerfile"
+  local G="git-dir"
+  local P1="platform1"
+  local P2="platform2"
+  local T1="tag1"
+  local T2="tag2"
+  local B1="build-arg1"
+  local B2="build-arg2"
+  local A1="--arg1 on"
+  local A2="--arg2 off"
 
   rm -f "$OUTPUT_FILE"
 
   stdout=$(dockerBuild \
-     -e "$REGISTRY" \
-     -r "$REPO" \
-     -d "$BUILD_CONTEXT" \
-     -f "$DOCKERFILE" \
-     -g "$GIT_DIR" \
-     -p "$PLATFORM1" \
-     -p "$PLATFORM2" \
-     -t "$TAG1" \
-     -t "$TAG2" \
-     -b "$BUILD_ARG1" \
-     -b "$BUILD_ARG2" \
-     -a "$ARG1" \
-     -a "$ARG2")
+     -e "$E" \
+     -r "$R" \
+     -d "$D" \
+     -f "$F" \
+     -g "$G" \
+     -p "$P1" \
+     -p "$P2" \
+     -t "$T1" \
+     -t "$T2" \
+     -b "$B1" \
+     -b "$B2" \
+     -a "$A1" \
+     -a "$A2")
   echo "$stdout"
   buildCmd=$(<"$OUTPUT_FILE")
   expected=$(<"$SCRIPT_DIR/expected/multipleArgs")
@@ -126,32 +126,32 @@ testMultipleArgs()
 
 testMultipleArgsCommaSeparated()
 {
-  local REGISTRY="docker-registry"
-  local REPO="docker-repo"
-  local BUILD_CONTEXT="build-context-dir"
-  local DOCKERFILE="dockerfile"
-  local GIT_DIR="git-dir"
-  local PLATFORM="platform1,platform2"
-  local TAG1="tag1"
-  local TAG2="tag2"
-  local BUILD_ARG1="build-arg1"
-  local BUILD_ARG2="build-arg2"
-  local ARG="--arg1 on --arg2 off"
+  local E="docker-registry"
+  local R="docker-repo"
+  local D="build-context-dir"
+  local F="dockerfile"
+  local G="git-dir"
+  local P="platform1,platform2"
+  local T1="tag1"
+  local T2="tag2"
+  local B1="build-arg1"
+  local B2="build-arg2"
+  local A="--arg1 on --arg2 off"
 
   rm -f "$OUTPUT_FILE"
 
   stdout=$(dockerBuild \
-     -e "$REGISTRY" \
-     -r "$REPO" \
-     -d "$BUILD_CONTEXT" \
-     -f "$DOCKERFILE" \
-     -g "$GIT_DIR" \
-     -p "$PLATFORM" \
-     -t "$TAG1" \
-     -t "$TAG2" \
-     -b "$BUILD_ARG1" \
-     -b "$BUILD_ARG2" \
-     -a "$ARG")
+     -e "$E" \
+     -r "$R" \
+     -d "$D" \
+     -f "$F" \
+     -g "$G" \
+     -p "$P" \
+     -t "$T1" \
+     -t "$T2" \
+     -b "$B1" \
+     -b "$B2" \
+     -a "$A")
   echo "$stdout"
   buildCmd=$(<"$OUTPUT_FILE")
   expected=$(<"$SCRIPT_DIR/expected/multipleArgs")
