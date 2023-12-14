@@ -1,0 +1,3 @@
+createBuilder
+docker buildx build -o type=registry -t docker-registry/docker-repo:latest -t docker-registry/docker-repo:mocked-git-version -t docker-registry/docker-repo:mocked-git-branch --cache-from=type=registry,ref=docker-registry/docker-repo:mocked-git-branch --cache-from=type=registry,ref=docker-registry/docker-repo:mocked-git-branch -f /opt/code/docker/Dockerfile /opt/code 2>&1
+removeBuilder

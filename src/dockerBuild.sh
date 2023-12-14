@@ -7,7 +7,7 @@ CODE_DIR="${CODE_DIR:-/opt/code}"
 function dockerBuildUsage
 {
     echo $'Usage:'
-    echo $'\tdockerBuild.sh dockerBuild -e dockerRegistryName -r dockerRepoName -c buildContextDir -f dockerFile [-g gitRepoDir] [-p platform]... [-t tag]... [-b buildArg]... [-a arg]... [-h]'
+    echo $'\tdockerBuild.sh dockerBuild -e dockerRegistryName -r dockerRepoName -c buildContextDir -f dockerFile [-g gitRepoDir] [-p platform]... [-t tag]... [-b buildArg]... [-a arg]... [-n] [-o] [-h]'
     echo $'\t\t-e - Docker registry name.'
     echo $'\t\t\te.g. "index.docker.io/my-registry"'
     echo $'\t\t-r - Docker repo name.'
@@ -83,12 +83,14 @@ function dockerBuild
     local BUILD_CONTEXT_DIR=""
     local DOCKER_FILE=""
     local GIT_DIR=""
+    local NO_GIT_VERSION=""
+    local NO_GIT_BRANCH=""
     local PLATFORM=()
     local TAGS=()
     local BUILD_ARGS=()
     local ADDITIONAL_BUILD_FLAGS=()
 
-    while getopts ":e:r:c:f:g:p:t:b:a:h" opt; do
+    while getopts ":e:r:c:f:g:p:t:b:a:noh" opt; do
       case $opt in
         e)
           DOCKER_REGISTRY="$OPTARG"
@@ -116,6 +118,12 @@ function dockerBuild
           ;;
         a)
           ADDITIONAL_BUILD_FLAGS+=("$OPTARG")
+          ;;
+        n)
+          NO_GIT_VERSION="true"
+          ;;
+        o)
+          NO_GIT_BRANCH="true"
           ;;
         h)
           dockerBuildUsage
@@ -165,8 +173,9 @@ function dockerBuild
     #The location of the .git directory is required.
     GIT_DIR="$GIT_DIR/.git"
 
-    #Default is to just tag with the git version.
-    if [ ${#TAGS[@]} -eq 0 ]; then
+    #Unless the NO_GIT_VERSION flag is set, get the git repo version
+    #  and add to the tags list.
+    if [ -z "$NO_GIT_VERSION" ]; then
         local gitVersion=""
         gitVersion=$(getGitVersion)
         if [ -z "$gitVersion" ]; then
@@ -177,15 +186,18 @@ function dockerBuild
     fi
 
     #Find the current git branch.
-    local gitBranch=""
-    gitBranch=$(getGitBranch)
-    if [ -z "$gitBranch" ]; then
-        echo "Could not determine git branch name, caching to main."
-        gitBranch="$MAIN_BRANCH"
-    else
-        #Tag with the branch name, so we have a tag that tracks the latest version of a branch,
-        #  and also so that we have a location to push the build cache.
-        TAGS+=("$gitBranch")
+    #  Default to the main branch for caching.
+    local gitBranch="$MAIN_BRANCH"
+    if [ -z "$NO_GIT_BRANCH" ]; then
+        gitBranch=$(getGitBranch)
+        if [ -z "$gitBranch" ]; then
+            echo "Could not determine git branch name."
+            exit 1
+        else
+            #Tag with the branch name, so we have a tag that tracks the latest version of a branch,
+            #  and also so that we have a location to push the build cache.
+            TAGS+=("$gitBranch")
+        fi
     fi
 
     echo "REGISTRY:$DOCKER_REGISTRY"
@@ -242,9 +254,21 @@ function dockerBuild
 
 #When calling this script through docker, many arguments are
 #  always the same.  This is a shortcut for calling dockerBuild()
-function dockerBuildStandard
+function dockerBuildStandardBranch
 {
     dockerBuild -c "$CODE_DIR" -f "$CODE_DIR/docker/Dockerfile" -g "$CODE_DIR" "$@"
+}
+function dockerBuildStandardMain
+{
+    dockerBuild -c "$CODE_DIR" -f "$CODE_DIR/docker/Dockerfile" -g "$CODE_DIR" -t "latest" "$@"
+}
+function dockerBuildStandardTag
+{
+    local TAG="$1"
+    shift
+    echo "${@}"
+    #TODO - -n
+    dockerBuild -c "$CODE_DIR" -f "$CODE_DIR/docker/Dockerfile" -g "$CODE_DIR" -n -o -t "$TAG" "${@}"
 }
 
 #Allows function calls based on arguments passed to the script

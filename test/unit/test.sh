@@ -152,35 +152,54 @@ function testMultipleArgsCommaSeparated()
   echo ""
 }
 
-function testdockerBuildStandard()
+function testdockerBuildStandardBranch()
 {
   local E="docker-registry"
   local R="docker-repo"
-  local P1="platform1"
-  local P2="platform2"
-  local T1="tag1"
-  local T2="tag2"
-  local B1="build-arg1"
-  local B2="build-arg2"
-  local A1="--arg1 on"
-  local A2="--arg2 off"
 
   rm -f "$OUTPUT_FILE"
 
-  stdout=$(dockerBuildStandard \
+  stdout=$(dockerBuildStandardBranch \
      -e "$E" \
-     -r "$R" \
-     -p "$P1" \
-     -p "$P2" \
-     -t "$T1" \
-     -t "$T2" \
-     -b "$B1" \
-     -b "$B2" \
-     -a "$A1" \
-     -a "$A2")
+     -r "$R" )
   echo "$stdout"
   buildCmd=$(<"$OUTPUT_FILE")
-  expected=$(<"$SCRIPT_DIR/expected/buildStandard")
+  expected=$(<"$SCRIPT_DIR/expected/buildStandardBranch")
+  assertEquals "$expected" "$buildCmd"
+  echo ""
+}
+
+function testdockerBuildStandardMain()
+{
+  local E="docker-registry"
+  local R="docker-repo"
+
+  rm -f "$OUTPUT_FILE"
+
+  stdout=$(dockerBuildStandardMain \
+     -e "$E" \
+     -r "$R" )
+  echo "$stdout"
+  buildCmd=$(<"$OUTPUT_FILE")
+  expected=$(<"$SCRIPT_DIR/expected/buildStandardMain")
+  assertEquals "$expected" "$buildCmd"
+  echo ""
+}
+
+function testdockerBuildStandardTag()
+{
+  local E="docker-registry"
+  local R="docker-repo"
+
+  rm -f "$OUTPUT_FILE"
+
+  stdout=$(dockerBuildStandardTag \
+     "tag1" \
+     -e "$E" \
+     -r "$R" )
+  echo "$stdout"
+  buildCmd=$(<"$OUTPUT_FILE")
+  expected=$(<"$SCRIPT_DIR/expected/buildStandardTag")
   assertEquals "$expected" "$buildCmd"
   echo ""
 }
