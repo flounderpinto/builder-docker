@@ -48,7 +48,7 @@ docker:
         -e ${DOCKER_REGISTRY} \
         -r ${DOCKER_REPO} \
         -p ${DOCKER_PLATFORM} \
-        -d "." \
+        -c "." \
         -g "." \
         -f ./docker/Dockerfile \
         ${ARGS}
