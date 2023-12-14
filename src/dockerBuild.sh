@@ -2,7 +2,6 @@
 
 THIS_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 MAIN_BRANCH="main"
-CODE_DIR="${CODE_DIR:-/opt/code}"
 
 function dockerBuildUsage
 {
@@ -168,7 +167,7 @@ function dockerBuild
 
     #If not git repo provided, default to the code dir
     if [ -z "$GIT_DIR" ]; then
-        GIT_DIR="$CODE_DIR"
+        GIT_DIR="."
     fi
     #The location of the .git directory is required.
     GIT_DIR="$GIT_DIR/.git"
@@ -253,21 +252,22 @@ function dockerBuild
 }
 
 #When calling this script through docker, many arguments are
-#  always the same.  This is a shortcut for calling dockerBuild()
+#  always the same.  These methods are shortcuts for calling dockerBuild().
+#  Relative paths allow the script to work inside or outside of docker.
 function dockerBuildStandardBranch
 {
     dockerBuild -c "." -f "./docker/Dockerfile" -g "." "$@"
 }
 function dockerBuildStandardMain
 {
-    dockerBuild -c "$CODE_DIR" -f "$CODE_DIR/docker/Dockerfile" -g "$CODE_DIR" -t "latest" "$@"
+    dockerBuild -c "." -f "./docker/Dockerfile" -g "." -t "latest" "$@"
 }
 function dockerBuildStandardTag
 {
     local TAG="$1"
     shift
     echo "${@}"
-    dockerBuild -c "$CODE_DIR" -f "$CODE_DIR/docker/Dockerfile" -g "$CODE_DIR" -n -o -t "$TAG" "${@}"
+    dockerBuild -c "." -f "./docker/Dockerfile" -g "." -n -o -t "$TAG" "${@}"
 }
 
 #Allows function calls based on arguments passed to the script
