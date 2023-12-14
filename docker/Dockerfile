@@ -41,4 +41,4 @@ RUN chmod +x /bin/entrypoint.sh
 
 #Run
 WORKDIR ${INSTALL_DIR_ENV}
-ENTRYPOINT ["/bin/entrypoint.sh", "./dockerBuild.sh"]
+ENTRYPOINT ["/bin/entrypoint.sh", "$INSTALL_DIR_ENV/dockerBuild.sh"]
