@@ -51,7 +51,7 @@ docker_main:
 	${DOCKER_BUILD_MAIN_CMD}
 
 docker_tag:
-	.${DOCKER_BUILD_TAG_CMD}
+	${DOCKER_BUILD_TAG_CMD}
 
 #Everything right of the pipe is order-only prerequisites.
 all: | init analyze unit_test docker
