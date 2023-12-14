@@ -7,13 +7,13 @@ CODE_DIR="${CODE_DIR:-/opt/code}"
 function dockerBuildUsage
 {
     echo $'Usage:'
-    echo $'\tdockerBuild.sh dockerBuild -e dockerRegistryName -r dockerRepoName -c buildContextDir -d dockerFile [-g gitRepoDir] [-p platform]... [-t tag]... [-b buildArg]... [-a arg]... [-h]'
+    echo $'\tdockerBuild.sh dockerBuild -e dockerRegistryName -r dockerRepoName -c buildContextDir -f dockerFile [-g gitRepoDir] [-p platform]... [-t tag]... [-b buildArg]... [-a arg]... [-h]'
     echo $'\t\t-e - Docker registry name.'
     echo $'\t\t\te.g. "index.docker.io/my-registry"'
     echo $'\t\t-r - Docker repo name.'
     echo $'\t\t\te.g. "builder-docker".'
     echo $'\t\t-c - Docker build context.'
-    echo $'\t\t-d - Dockerfile location.'
+    echo $'\t\t-f - Dockerfile location.'
     echo $'\t\t-g - Git repo directory.'
     echo $'\t\t-p - Target platform for build.'
     echo $'\t\t\tCan be a comma-separated list or defined multiple times. '
@@ -88,7 +88,7 @@ function dockerBuild
     local BUILD_ARGS=()
     local ADDITIONAL_BUILD_FLAGS=()
 
-    while getopts ":e:r:c:d:g:p:t:b:a:h" opt; do
+    while getopts ":e:r:c:f:g:p:t:b:a:h" opt; do
       case $opt in
         e)
           DOCKER_REGISTRY="$OPTARG"
@@ -99,7 +99,7 @@ function dockerBuild
         c)
           BUILD_CONTEXT_DIR="$OPTARG"
           ;;
-        d)
+        f)
           DOCKER_FILE="$OPTARG"
           ;;
         g)
@@ -244,7 +244,7 @@ function dockerBuild
 #  always the same.  This is a shortcut for calling dockerBuild()
 function dockerBuildStandard
 {
-    dockerBuild -c "$CODE_DIR" -d "$CODE_DIR/docker/Dockerfile" -g "$CODE_DIR" "$@"
+    dockerBuild -c "$CODE_DIR" -f "$CODE_DIR/docker/Dockerfile" -g "$CODE_DIR" "$@"
 }
 
 #Allows function calls based on arguments passed to the script
