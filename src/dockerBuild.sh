@@ -1,6 +1,5 @@
 #!/bin/bash
 
-THIS_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 MAIN_BRANCH="main"
 
 function dockerBuildUsage
@@ -62,10 +61,8 @@ function build
 {
     local buildCmd="$1"
     echo "Building: $buildCmd"
-    #TODO - NEEDED?
-    eval "$buildCmd" | tee "$THIS_DIR"/tmp
-    #The exit code of 'docker build' is lost with $? because of the pipe.  Use PIPESTATUS instead.
-    local buildSuccess=${PIPESTATUS[0]}
+    eval "$buildCmd"
+    local buildSuccess=$?
     if [ "$buildSuccess" -ne 0 ]; then
        echo "Docker build error.  Exiting."
        #Remove builder before exiting instance
