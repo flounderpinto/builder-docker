@@ -14,7 +14,7 @@ DOCKER_BUILD_BRANCH_CMD=./src/dockerBuild.sh dockerBuildStandardBranch -e ${DOCK
 DOCKER_BUILD_MAIN_CMD=./src/dockerBuild.sh dockerBuildStandardMain -e ${DOCKER_REGISTRY} -r ${DOCKER_REPO} ${ARGS}
 DOCKER_BUILD_TAG_CMD=./src/dockerBuild.sh dockerBuildStandardTag ${TAG} -e ${DOCKER_REGISTRY} -r ${DOCKER_REPO} ${ARGS}
 
-BUILDER_IMAGE=${DOCKER_REGISTRY}/builder-bash:v0.0.4
+BUILDER_IMAGE=${DOCKER_REGISTRY}/builder-bash:v0.0.5
 BUILDER_PULL_CMD=docker pull ${BUILDER_IMAGE}
 BUILDER_RUN_CMD=${BUILDER_PULL_CMD} && \
     docker run \
