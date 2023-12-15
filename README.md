@@ -5,16 +5,16 @@ A script to standardize and automate building docker images in CI/CD pipelines.
 ## Description
 This repo contains a dockerBuild.sh script in this repo is a thin wrapper around the "docker build" (now buildx) command.  It also contains a Dockerfile that creates an image to contain the script's run environment.  The docker image of this repo lives at https://hub.docker.com/repository/docker/flounder5/builder-docker.  
 
-This repo was born out of a desire to standardize docker image builds across a project/program/company/etc.  There was a need to handle 3 particular use-cases, as well as trying to simplify the process for developers that weren't docker experts.  The use cases were:
+This repo was born out of a desire to standardize docker image builds across a project/program/company/etc.  There was a need to handle 3 particular use-cases, as well as trying to simplify the process for developers that weren't docker experts.  The use cases are:
 1. When building from a git branch that's the "main" branch, build/tag/push the image with the following tags:
-	a. The full git version hash (i.e. the output from `git log -1 --pretty=%H` ).
-	b. The git branch name ('main').
-	c. 'latest'.
+	1. The full git version hash (i.e. the output from `git log -1 --pretty=%H` ).
+ 	2. The git branch name ('main').
+	3. 'latest'.
 2. When building from a git branch other than the "main" branch, build/tag/push the image with:
-	a. The full git version hash.
-	b. The git branch name.
+	1. The full git version hash.
+	2. The git branch name.
 3. When building from a git tag, build/tag/push the image with:
-	a. The git tag name.
+	1. The git tag name.
 
 Using the option flags in the script, and modifications to the build pipeline file (Jenkinsfile, GitHub workflow file, etc.) the use cases can be tailored as needed.
 
