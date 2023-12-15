@@ -1,8 +1,8 @@
 #!/bin/bash
 
 # Globals that can be overwritten eith environment variables as needed
-DOCKER_REGISTRY="${DOCKER_REGISTRY}"
-MAIN_BRANCH="${MAIN_BRANCH}:-main"
+DOCKER_REGISTRY="${REGISTRY}"
+MAIN_BRANCH="${MAIN_BRANCH:-main}"
 
 function dockerBuildUsage
 {
