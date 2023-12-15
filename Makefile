@@ -3,7 +3,7 @@ ROOT_DIR:=$(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))
 
 CONTAINER_CODE_DIR=/opt/code
 
-DOCKER_REGISTRY=index.docker.io/flounder5
+DOCKER_REGISTRY=index.docker.io/flounderpinto
 DOCKER_REPO=builder-docker
 
 INIT_CMD=git submodule update --init --recursive

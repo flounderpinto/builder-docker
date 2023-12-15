@@ -3,7 +3,7 @@
 A script to standardize and automate building docker images in CI/CD pipelines.
 
 ## Description
-This repo contains a dockerBuild.sh script in this repo is a thin wrapper around the "docker build" (now buildx) command.  It also contains a Dockerfile that creates an image to contain the script's run environment.  The docker image of this repo lives at https://hub.docker.com/repository/docker/flounder5/builder-docker.  
+This repo contains a dockerBuild.sh script in this repo is a thin wrapper around the "docker build" (now buildx) command.  It also contains a Dockerfile that creates an image to contain the script's run environment.  The docker image of this repo lives at https://hub.docker.com/repository/docker/flounderpinto/builder-docker.  
 
 This repo was born out of a desire to standardize docker image builds across a project/program/company/etc.  There was a need to handle 3 particular use-cases, as well as trying to simplify the process for developers that weren't docker experts.  The use cases are:
 1. When building from a git branch that's the "main" branch, build/tag/push the image with the following tags:
@@ -63,7 +63,7 @@ function dockerBuildStandardTag
 ### Script Makefile example
 The commands to execute the script can be contained in a Makefile for ease of execution by either a human or a build pipeline.
 ```Makefile
-DOCKER_REGISTRY=index.docker.io/flounder5
+DOCKER_REGISTRY=index.docker.io/flounderpinto
 
 DOCKER_REPO=TODO-MY-DOCKER-REPO-NAME #Replace
 DOCKER_BUILD_BRANCH_CMD=./src/dockerBuild.sh dockerBuildStandardBranch -e ${DOCKER_REGISTRY} -r ${DOCKER_REPO} ${ARGS}
@@ -91,13 +91,13 @@ ROOT_DIR:=$(shell dirname $(realpath  $(lastword  $(MAKEFILE_LIST))))
 
 CONTAINER_CODE_DIR=/opt/code
 
-DOCKER_REGISTRY=index.docker.io/flounder5
+DOCKER_REGISTRY=index.docker.io/flounderpinto
 
 DOCKER_REPO=TODO-MY-DOCKER-REPO-NAME #TODO - Replace
 DOCKER_BUILD_BRANCH_CMD=dockerBuildStandardBranch -e ${DOCKER_REGISTRY} -r ${DOCKER_REPO}  ${ARGS}
 DOCKER_BUILD_MAIN_CMD=dockerBuildStandardMain -e ${DOCKER_REGISTRY} -r ${DOCKER_REPO}  ${ARGS}
 DOCKER_BUILD_TAG_CMD=dockerBuildStandardTag ${TAG} -e ${DOCKER_REGISTRY} -r ${DOCKER_REPO}  ${ARGS}
-DOCKER_BUILDER_IMAGE=flounder5/builder-docker:v0.0.9 #TODO - Set to latest release
+DOCKER_BUILDER_IMAGE=flounderpinto/builder-docker:v0.0.9 #TODO - Set to latest release
 DOCKER_BUILDER_PULL_CMD=docker pull ${DOCKER_BUILDER_IMAGE}
 DOCKER_BUILDER_RUN_CMD=${DOCKER_BUILDER_PULL_CMD} && \
    docker run \
@@ -156,7 +156,7 @@ jobs:
 
 ## Issues/Shortcomings
 1. The Docker image is hard-coded to a specific version of Docker.  Typically the entire product/project tracks a single version, so odds are that the version currently specified in this project is not going to map. Need to figure out the best way around that and provide examples.
-	2. Maybe pull Docker out of the builder-docker image.  Then end-user creates a custom image `FROM flounder5/builder-docker:version` , and then installs their desired version.  In this scenario end-user could also specify DOCKER_REGISTRY value so that all users are pushing to same registry.
+	2. Maybe pull Docker out of the builder-docker image.  Then end-user creates a custom image `FROM flounderpinto/builder-docker:version` , and then installs their desired version.  In this scenario end-user could also specify DOCKER_REGISTRY value so that all users are pushing to same registry.
 
 ## License
 Distributed under the MIT License. See `LICENSE.txt` for more information.
