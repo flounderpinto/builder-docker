@@ -1,6 +1,8 @@
 #!/bin/bash
 
-MAIN_BRANCH="main"
+# Globals that can be overwritten eith environment variables as needed
+DOCKER_REGISTRY="${DOCKER_REGISTRY}"
+MAIN_BRANCH="${MAIN_BRANCH}:-main"
 
 function dockerBuildUsage
 {
@@ -74,7 +76,6 @@ function build
 # Builds and tags a docker image.
 function dockerBuild
 {
-    local DOCKER_REGISTRY=""
     local DOCKER_REPO=""
     local BUILD_CONTEXT_DIR=""
     local DOCKER_FILE=""
@@ -267,5 +268,4 @@ function dockerBuildStandardTag
     dockerBuild -c "." -f "./docker/Dockerfile" -g "." -n -o -t "$TAG" "${@}"
 }
 
-#Allows function calls based on arguments passed to the script
 "$@"

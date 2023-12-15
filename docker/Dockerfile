@@ -2,7 +2,6 @@ FROM ubuntu:22.04
 
 ARG DOCKER_VERSION=5:24.0.7-1~ubuntu.22.04~jammy
 ARG BUILDX_VERSION=0.11.2-1~ubuntu.22.04~jammy
-ARG TARGETPLATFORM
 
 RUN \
 # Add Docker's official GPG key:

@@ -153,3 +153,10 @@ jobs:
         run: make docker_tag TAG="${{github.ref_name}}"
         if: ${{ github.ref_type == 'tag' }}
 ```
+
+## Issues/Shortcomings
+1. The Docker image is hard-coded to a specific version of Docker.  Typically the entire product/project tracks a single version, so odds are that the version currently specified in this project is not going to map. Need to figure out the best way around that and provide examples.
+	2. Maybe pull Docker out of the builder-docker image.  Then end-user creates a custom image `FROM flounder5/builder-docker:version` , and then installs their desired version.  In this scenario end-user could also specify DOCKER_REGISTRY value so that all users are pushing to same registry.
+
+## License
+Distributed under the MIT License. See `LICENSE.txt` for more information.
