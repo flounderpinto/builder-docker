@@ -21,15 +21,3 @@ jobs:
 
       - name: Unit test
         run: make unit_test
-
-      - name: Docker build branch
-        run: make docker
-        if: ${{ github.ref_type == 'branch' && github.ref_name != 'main' }}
-
-      - name: Docker build main
-        run: make docker_main
-        if: ${{ github.ref_type == 'branch' && github.ref_name == 'main' }}
-
-      - name: Docker build tag
-        run: make docker_tag TAG="${{github.ref_name}}"
-        if: ${{ github.ref_type == 'tag' }}
