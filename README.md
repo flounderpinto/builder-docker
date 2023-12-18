@@ -85,38 +85,5 @@ docker_tag:
 ### Docker
 Typically you'll want to put this script along with the Docker CLI into a Docker container in order to run in a fully containerized environment.  Since each project/program/company/etc. typically standardizes on a version of Docker, it doesn't make sense for that Dockerfile to live here.  See the https://github.com/flounderpinto/builder-docker-flounderpinto repo for an example.
 
-### GitHub workflow example
-```yaml
-name: CI
-
-on:
-  push:
-  workflow_dispatch:
-
-jobs:
-  build:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-
-      - name: Log in to Docker Hub
-        uses: docker/login-action@v3
-        with:
-          username: ${{ secrets.TODO }}#TODO - Insert username secret name here
-          password: ${{ secrets.TODO }}#TODO - Insert access token secret name here
-
-      - name: Docker build branch
-        run: make docker
-        if: ${{ github.ref_type == 'branch' && github.ref_name != 'main' }}
-
-      - name: Docker build main
-        run: make docker_main
-        if: ${{ github.ref_type == 'branch' && github.ref_name == 'main' }}
-
-      - name: Docker build tag
-        run: make docker_tag TAG="${{github.ref_name}}"
-        if: ${{ github.ref_type == 'tag' }}
-```
-
 ## License
 Distributed under the MIT License. See `LICENSE.txt` for more information.
