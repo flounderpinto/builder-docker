@@ -1,11 +1,10 @@
-
 # Builder Docker
 A script to standardize and automate building docker images in CI/CD pipelines.
 
 ## Description
-This repo contains a dockerBuild.sh script in this repo is a thin wrapper around the "docker build" (now buildx) command.  It also contains a Dockerfile that creates an image to contain the script's run environment.  The docker image of this repo lives at https://hub.docker.com/repository/docker/flounderpinto/builder-docker.  
+This repo contains a dockerBuild.sh script that is a thin wrapper around the "docker build" (now buildx) command. 
 
-This repo was born out of a desire to standardize docker image builds across a project/program/company/etc.  There was a need to handle 3 particular use-cases, as well as trying to simplify the process for developers that weren't docker experts.  The use cases are:
+This repo was born out of a desire to standardize docker image builds across a project/program/company/etc.  There was a need to handle 3 particular use-cases, as well as trying to simplify the docker build process for developers.  The use cases are:
 1. When building from a git branch that's the "main" branch, build/tag/push the image with the following tags:
 	1. The full git version hash (i.e. the output from `git log -1 --pretty=%H` ).
  	2. The git branch name ('main').
@@ -83,43 +82,8 @@ docker_tag:
 	${DOCKER_BUILD_TAG_CMD}
 ```
 
-### Docker Makefile example
-The same Makefile that runs the builder-docker image instead.
-
-```Makefile
-ROOT_DIR:=$(shell dirname $(realpath  $(lastword  $(MAKEFILE_LIST))))
-
-CONTAINER_CODE_DIR=/opt/code
-
-DOCKER_REGISTRY=index.docker.io/flounderpinto
-
-DOCKER_REPO=TODO-MY-DOCKER-REPO-NAME #TODO - Replace
-DOCKER_BUILD_BRANCH_CMD=dockerBuildStandardBranch -e ${DOCKER_REGISTRY} -r ${DOCKER_REPO}  ${ARGS}
-DOCKER_BUILD_MAIN_CMD=dockerBuildStandardMain -e ${DOCKER_REGISTRY} -r ${DOCKER_REPO}  ${ARGS}
-DOCKER_BUILD_TAG_CMD=dockerBuildStandardTag ${TAG} -e ${DOCKER_REGISTRY} -r ${DOCKER_REPO}  ${ARGS}
-DOCKER_BUILDER_IMAGE=flounderpinto/builder-docker:v0.0.9 #TODO - Set to latest release
-DOCKER_BUILDER_PULL_CMD=docker pull ${DOCKER_BUILDER_IMAGE}
-DOCKER_BUILDER_RUN_CMD=${DOCKER_BUILDER_PULL_CMD} && \
-   docker run \
-      --rm \
-      -v /var/run/docker.sock:/var/run/docker.sock \
-      -v ${HOME}/.docker:/tmp/.docker:ro \
-      -v ${ROOT_DIR}:${CONTAINER_CODE_DIR} \
-      -w ${CONTAINER_CODE_DIR} \
-      ${DOCKER_BUILDER_IMAGE}
-
-.PHONY: docker docker_main docker_tag
-
-docker:
-	${DOCKER_BUILDER_RUN_CMD} ${DOCKER_BUILD_BRANCH_CMD}
-
-docker_main:
-	${DOCKER_BUILDER_RUN_CMD} ${DOCKER_BUILD_MAIN_CMD}
-
-docker_tag:
-	test ${TAG}
-	${DOCKER_BUILDER_RUN_CMD} ${DOCKER_BUILD_TAG_CMD}
-```
+### Docker
+Typically you'll want to put this script along with the Docker CLI into a Docker container in order to run in a fully containerized environment.  Since each project/program/company/etc. typically standardizes on a version of Docker, it doesn't make sense for that Dockerfile to live here.  See the https://github.com/flounderpinto/builder-docker-flounderpinto repo for an example.
 
 ### GitHub workflow example
 ```yaml
@@ -153,10 +117,6 @@ jobs:
         run: make docker_tag TAG="${{github.ref_name}}"
         if: ${{ github.ref_type == 'tag' }}
 ```
-
-## Issues/Shortcomings
-1. The Docker image is hard-coded to a specific version of Docker.  Typically the entire product/project tracks a single version, so odds are that the version currently specified in this project is not going to map. Need to figure out the best way around that and provide examples.
-	2. Maybe pull Docker out of the builder-docker image.  Then end-user creates a custom image `FROM flounderpinto/builder-docker:version` , and then installs their desired version.  In this scenario end-user could also specify DOCKER_REGISTRY value so that all users are pushing to same registry.
 
 ## License
 Distributed under the MIT License. See `LICENSE.txt` for more information.
