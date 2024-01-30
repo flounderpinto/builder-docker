@@ -21,23 +21,23 @@ function getGitBranch()
 }
 export -f getGitBranch
 
-function createBuilder()
-{
-  echo "createBuilder" >> "$OUTPUT_FILE"
-}
-export -f createBuilder
-
-function removeBuilder()
-{
-  echo "removeBuilder" >> "$OUTPUT_FILE"
-}
-export -f removeBuilder
-
-function build()
+function _create()
 {
   echo "$1" >> "$OUTPUT_FILE"
 }
-export -f build
+export -f _create
+
+function _remove()
+{
+  echo "$1" >> "$OUTPUT_FILE"
+}
+export -f _remove
+
+function _build()
+{
+  echo "$1" >> "$OUTPUT_FILE"
+}
+export -f _build
 # ------------------
 # End Mocks
 # ------------------
@@ -53,6 +53,8 @@ function testSingleArgs()
   local R="docker-repo"
   local C="build-context-dir"
   local F="dockerfile"
+  local K="test.toml"
+  local X="myrepo/moby/buildkit:buildx-stable-1"
   local G="git-dir"
   local P="target"
   local T="tag"
@@ -61,11 +63,13 @@ function testSingleArgs()
 
   rm -f "$OUTPUT_FILE"
 
-  stdout=$(dockerBuild \
+  stdout=$(BUILDER=test_builder dockerBuild \
      -e "$E" \
      -r "$R" \
      -c "$C" \
      -f "$F" \
+     -k "$K" \
+     -x "$X" \
      -g "$G" \
      -p "$P" \
      -t "$T" \
@@ -96,7 +100,7 @@ function testMultipleArgs()
 
   rm -f "$OUTPUT_FILE"
 
-  stdout=$(dockerBuild \
+  stdout=$(BUILDER=test_builder dockerBuild \
      -e "$E" \
      -r "$R" \
      -c "$C" \
@@ -133,7 +137,7 @@ function testMultipleArgsCommaSeparated()
 
   rm -f "$OUTPUT_FILE"
 
-  stdout=$(dockerBuild \
+  stdout=$(BUILDER=test_builder dockerBuild \
      -e "$E" \
      -r "$R" \
      -c "$C" \
@@ -159,7 +163,7 @@ function testdockerBuildStandardBranch()
 
   rm -f "$OUTPUT_FILE"
 
-  stdout=$(dockerBuildStandardBranch \
+  stdout=$(BUILDER=test_builder dockerBuildStandardBranch \
      -e "$E" \
      -r "$R" )
   echo "$stdout"
@@ -176,7 +180,7 @@ function testdockerBuildStandardMain()
 
   rm -f "$OUTPUT_FILE"
 
-  stdout=$(dockerBuildStandardMain \
+  stdout=$(BUILDER=test_builder dockerBuildStandardMain \
      -e "$E" \
      -r "$R" )
   echo "$stdout"
@@ -193,7 +197,7 @@ function testdockerBuildStandardTag()
 
   rm -f "$OUTPUT_FILE"
 
-  stdout=$(dockerBuildStandardTag \
+  stdout=$(BUILDER=test_builder dockerBuildStandardTag \
      "tag1" \
      -e "$E" \
      -r "$R" )

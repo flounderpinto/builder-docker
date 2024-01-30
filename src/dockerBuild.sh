@@ -4,17 +4,24 @@
 DOCKER_REGISTRY="${REGISTRY}"
 MAIN_BRANCH="${MAIN_BRANCH:-main}"
 
+BUILDER=""
+
 function dockerBuildUsage
 {
     echo $'Usage:'
-    echo $'\tdockerBuild.sh dockerBuild -e dockerRegistryName -r dockerRepoName -c buildContextDir -f dockerFile [-g gitRepoDir] [-p platform]... [-t tag]... [-b buildArg]... [-a arg]... [-n] [-o] [-h]'
+    echo $'\tdockerBuild.sh dockerBuild -e dockerRegistryName -r dockerRepoName -c buildContextDir -f dockerFile [-k tomlConfigFile] [-x buildxImage] [-g gitRepoDir] [-m gitBranchName] [-p platform]... [-t tag]... [-b buildArg]... [-a arg]... [-n] [-o] [-h]'
     echo $'\t\t-e - Docker registry name.'
     echo $'\t\t\te.g. "index.docker.io/my-registry"'
     echo $'\t\t-r - Docker repo name.'
     echo $'\t\t\te.g. "builder-docker".'
     echo $'\t\t-c - Docker build context.'
     echo $'\t\t-f - Dockerfile location.'
+    echo $'\t\t-k - Toml config file.'
+    echo $'\t\t-x - BuildX image location.'
     echo $'\t\t-g - Git repo directory.'
+    echo $'\t\t-m - Git branch name.'
+    echo $'\t\t\tThis script will attempt to determine this automatically.'
+    echo $'\t\t\tTo override that behavior, use this flag to specify the branch name manually.'
     echo $'\t\t-p - Target platform for build.'
     echo $'\t\t\tCan be a comma-separated list or defined multiple times. '
     echo $'\t\t\te.g. "linux/amd64", or "linux/amd64,linux/arm/v7"'
@@ -24,6 +31,8 @@ function dockerBuildUsage
     echo $'\t\t\tCan be defined multiple times.'
     echo $'\t\t-a - Additional docker build args passed directly to docker build.'
     echo $'\t\t\tCan be a comma-separated list or defined multiple times.'
+    echo $'\t\t-n - Do not tag with the git version hash.'
+    echo $'\t\t-o - Do not tag with the git branch name.'
     echo $'\t\t-h - Show this help.'
 }
 
@@ -37,10 +46,12 @@ function getGitBranch
     git --git-dir "$GIT_DIR" branch --show-current
 }
 
-function createBuilder
+#This function exits in order to intercept the command in unit tests.
+function _create
 {
-    local createBuilderCmd="docker buildx create --use"
-    eval "$createBuilderCmd"
+    echo "Creating: $1"
+    BUILDER=$(eval "$1")
+    echo "CREATED BUILDER $BUILDER"
     local status=$?
     if [ "$status" -ne 0 ]; then
         echo "Error creating builder instance"
@@ -48,10 +59,21 @@ function createBuilder
     fi
 }
 
-function removeBuilder
+function createBuilder
 {
-    local removeBuilderCmd="docker buildx rm --force"
-    eval "$removeBuilderCmd"
+    local buildxImage="$1"
+    local tomlConfigFile="$2"
+    local createBuilderCmd="docker buildx create --driver=docker-container --driver-opt=\"image=$buildxImage\""
+    if [ -n "$tomlConfigFile" ]; then
+        createBuilderCmd="${createBuilderCmd} --config ${tomlConfigFile}"
+    fi
+    _create "$createBuilderCmd"
+}
+
+#This function exits in order to intercept the command in unit tests.
+function _remove
+{
+    eval "$1"
     local status=$?
     if [ "$status" -ne 0 ]; then
         echo "Error removing builder instance"
@@ -59,18 +81,30 @@ function removeBuilder
     fi
 }
 
-function build
+function removeBuilder
 {
-    local buildCmd="$1"
-    echo "Building: $buildCmd"
-    eval "$buildCmd"
+    local removeBuilderCmd="docker buildx rm $BUILDER --force"
+    _remove "$removeBuilderCmd"
+}
+
+#This function exits in order to intercept the command in unit tests.
+function _build
+{
+    echo "Building: $1"
+    eval "$1"
     local buildSuccess=$?
     if [ "$buildSuccess" -ne 0 ]; then
        echo "Docker build error.  Exiting."
        #Remove builder before exiting instance
-       removeBuilder
+       removeBuilder "$BUILDER"
        exit "$buildSuccess"
     fi
+}
+
+function buildImage
+{
+    local buildCmd="BUILDX_BUILDER=$BUILDER $1"
+    _build "$buildCmd"
 }
 
 # Builds and tags a docker image.
@@ -79,7 +113,10 @@ function dockerBuild
     local DOCKER_REPO=""
     local BUILD_CONTEXT_DIR=""
     local DOCKER_FILE=""
+    local TOML_CONFIG_FILE=""
+    local BUILDX_IMAGE=""
     local GIT_DIR=""
+    local GIT_BRANCH=""
     local NO_GIT_VERSION=""
     local NO_GIT_BRANCH=""
     local PLATFORM=()
@@ -87,7 +124,7 @@ function dockerBuild
     local BUILD_ARGS=()
     local ADDITIONAL_BUILD_FLAGS=()
 
-    while getopts ":e:r:c:f:g:p:t:b:a:noh" opt; do
+    while getopts ":e:r:c:f:k:x:g:m:p:t:b:a:noh" opt; do
       case $opt in
         e)
           DOCKER_REGISTRY="$OPTARG"
@@ -101,8 +138,17 @@ function dockerBuild
         f)
           DOCKER_FILE="$OPTARG"
           ;;
+        k)
+          TOML_CONFIG_FILE="$OPTARG"
+          ;;
+        x)
+          BUILDX_IMAGE="$OPTARG"
+          ;;
         g)
           GIT_DIR="$OPTARG"
+          ;;
+        m)
+          GIT_BRANCH="$OPTARG"
           ;;
         p)
           PLATFORM+=("$OPTARG")
@@ -163,6 +209,11 @@ function dockerBuild
         exit 1
     fi
 
+    #If no buildx image location provided, use default.
+    if [ -z "$BUILDX_IMAGE" ]; then
+        BUILDX_IMAGE="moby/buildkit:buildx-stable-1"
+    fi
+
     #If not git repo provided, default to the code dir
     if [ -z "$GIT_DIR" ]; then
         GIT_DIR="."
@@ -186,21 +237,26 @@ function dockerBuild
     #  Default to the main branch for caching.
     local gitBranch="$MAIN_BRANCH"
     if [ -z "$NO_GIT_BRANCH" ]; then
-        gitBranch=$(getGitBranch)
-        if [ -z "$gitBranch" ]; then
-            echo "Could not determine git branch name."
-            exit 1
+        if [ -n "$GIT_BRANCH" ]; then
+           gitBranch="$GIT_BRANCH"
         else
-            #Tag with the branch name, so we have a tag that tracks the latest version of a branch,
-            #  and also so that we have a location to push the build cache.
-            TAGS+=("$gitBranch")
+            gitBranch=$(getGitBranch)
+            if [ -z "$gitBranch" ]; then
+                echo "Could not determine git branch name."
+                exit 1
+            fi
         fi
+        #Tag with the branch name, so we have a tag that tracks the latest version of a branch,
+        #  and also so that we have a location to push the build cache.
+        TAGS+=("$gitBranch")
     fi
 
     echo "REGISTRY:$DOCKER_REGISTRY"
     echo "REPO:$DOCKER_REPO"
     echo "BUILD_CONTEXT_DIR:$BUILD_CONTEXT_DIR"
     echo "DOCKER_FILE:$DOCKER_FILE"
+    echo "TOML_CONFIG_FILE:$TOML_CONFIG_FILE"
+    echo "BUILDX_IMAGE:$BUILDX_IMAGE"
     echo "GIT_DIR:$GIT_DIR"
     echo "PLATFORM:${PLATFORM[*]}"
     echo "TAGS:${TAGS[*]}"
@@ -234,14 +290,13 @@ function dockerBuild
     #  single branch should be fairly minimal.
     #  https://docs.docker.com/build/cache/backends/#multiple-caches
     buildCmd="${buildCmd} --cache-from=type=registry,ref=$DOCKER_REGISTRY/$DOCKER_REPO:$gitBranch"
-    buildCmd="${buildCmd} --cache-from=type=registry,ref=$DOCKER_REGISTRY/$DOCKER_REPO:$gitBranch"
     buildCmd="${buildCmd} -f $DOCKER_FILE $BUILD_CONTEXT_DIR 2>&1"
 
     #Create a new builder instance
-    createBuilder
+    createBuilder "$BUILDX_IMAGE" "$TOML_CONFIG_FILE"
 
     #Build
-    build "$buildCmd"
+    buildImage "$buildCmd"
 
     #Remove builder instance
     removeBuilder

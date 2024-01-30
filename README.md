@@ -22,24 +22,31 @@ Using the option flags in the script, and modifications to the build pipeline fi
 ### Script syntax
 ```bash
 Usage:
-	dockerBuild.sh dockerBuild -e dockerRegistryName -r dockerRepoName -c buildContextDir -f dockerFile [-g gitRepoDir] [-p platform]... [-t tag]... [-b buildArg]... [-a arg]... [-n] [-o] [-h]
-		-e - Docker registry name.
-			e.g. "index.docker.io/my-registry"
-		-r - Docker repo name.
-			e.g. "builder-docker".
-		-c - Docker build context.
-		-f - Dockerfile location.
-		-g - Git repo directory.
-		-p - Target platform for build.
-			Can be a comma-separated list or defined multiple times. 
-			e.g. "linux/amd64", or "linux/amd64,linux/arm/v7"
-		-t - Additional tags to apply to the image.
-			Can be defined multiple times.
-		-b - Build-arg values.
-			Can be defined multiple times.
-		-a - Additional docker build args passed directly to docker build.
-			Can be a comma-separated list or defined multiple times.
-		-h - Show this help.
+   dockerBuild.sh dockerBuild -e dockerRegistryName -r dockerRepoName -c buildContextDir -f dockerFile [-k tomlConfigFile] [-x buildxImage] [-g gitRepoDir] [-m gitBranchName] [-p platform]... [-t tag]... [-b buildArg]... [-a arg]... [-n] [-o] [-h]
+      -e - Docker registry name.
+         e.g. "index.docker.io/my-registry"
+      -r - Docker repo name.
+         e.g. "builder-docker".
+      -c - Docker build context.
+      -f - Dockerfile location.
+      -k - Toml config file.
+      -x - BuildX image location.
+      -g - Git repo directory.
+      -m - Git branch name.
+         This script will attempt to determine this automatically.
+         To override that behavior, use this flag to specify the branch name manually.
+      -p - Target platform for build.
+         Can be a comma-separated list or defined multiple times. 
+         e.g. "linux/amd64", or "linux/amd64,linux/arm/v7"
+      -t - Additional tags to apply to the image.
+         Can be defined multiple times.
+      -b - Build-arg values.
+         Can be defined multiple times.
+      -a - Additional docker build args passed directly to docker build.
+         Can be a comma-separated list or defined multiple times.
+      -n - Do not tag with the git version hash.
+      -o - Do not tag with the git branch name.
+      -h - Show this help.
 ```
 There's 3 other functions in the script that simplify the 3 use cases above.
 ```bash

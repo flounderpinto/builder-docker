@@ -1,3 +1,3 @@
-createBuilder
-docker buildx build -o type=registry --build-arg build-arg --platform=target --arg on -t docker-registry/docker-repo:tag -t docker-registry/docker-repo:mocked-git-version -t docker-registry/docker-repo:mocked-git-branch --cache-from=type=registry,ref=docker-registry/docker-repo:mocked-git-branch --cache-from=type=registry,ref=docker-registry/docker-repo:mocked-git-branch -f dockerfile build-context-dir 2>&1
-removeBuilder
+docker buildx create --driver=docker-container --driver-opt="image=myrepo/moby/buildkit:buildx-stable-1" --config test.toml
+BUILDX_BUILDER=test_builder docker buildx build -o type=registry --build-arg build-arg --platform=target --arg on -t docker-registry/docker-repo:tag -t docker-registry/docker-repo:mocked-git-version -t docker-registry/docker-repo:mocked-git-branch --cache-from=type=registry,ref=docker-registry/docker-repo:mocked-git-branch -f dockerfile build-context-dir 2>&1
+docker buildx rm test_builder --force
