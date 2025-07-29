@@ -290,6 +290,7 @@ function dockerBuild
     #  single branch should be fairly minimal.
     #  https://docs.docker.com/build/cache/backends/#multiple-caches
     buildCmd="${buildCmd} --cache-from=type=registry,ref=$DOCKER_REGISTRY/$DOCKER_REPO:$gitBranch"
+    buildCmd="${buildCmd} --cache-to=type=inline"
     buildCmd="${buildCmd} -f $DOCKER_FILE $BUILD_CONTEXT_DIR 2>&1"
 
     #Create a new builder instance
