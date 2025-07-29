@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Globals that can be overwritten eith environment variables as needed
+# Globals that can be overwritten with environment variables as needed
 DOCKER_REGISTRY="${REGISTRY}"
 MAIN_BRANCH="${MAIN_BRANCH:-main}"
 
